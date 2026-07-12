@@ -37,6 +37,68 @@ function validateProductInput(input) {
   };
 }
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MIN_PASSWORD_LENGTH = 6;
+
+/**
+ * Validates registration input: name, email, password all required,
+ * email must look like an email, password must meet minimum length.
+ */
+function validateRegisterInput(input) {
+  const errors = {};
+  const name = typeof input.name === "string" ? input.name.trim() : "";
+  const email = typeof input.email === "string" ? input.email.trim().toLowerCase() : "";
+  const password = typeof input.password === "string" ? input.password : "";
+
+  if (!name) {
+    errors.name = "Name is required.";
+  }
+
+  if (!email) {
+    errors.email = "Email is required.";
+  } else if (!EMAIL_REGEX.test(email)) {
+    errors.email = "Enter a valid email address.";
+  }
+
+  if (!password) {
+    errors.password = "Password is required.";
+  } else if (password.length < MIN_PASSWORD_LENGTH) {
+    errors.password = `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`;
+  }
+
+  return {
+    isValid: Object.keys(errors).length === 0,
+    errors,
+    data: { name, email, password }
+  };
+}
+
+/**
+ * Validates login input: email and password required (no format checks
+ * beyond presence, since we don't want to leak which rule failed).
+ */
+function validateLoginInput(input) {
+  const errors = {};
+  const email = typeof input.email === "string" ? input.email.trim().toLowerCase() : "";
+  const password = typeof input.password === "string" ? input.password : "";
+
+  if (!email) {
+    errors.email = "Email is required.";
+  }
+
+  if (!password) {
+    errors.password = "Password is required.";
+  }
+
+  return {
+    isValid: Object.keys(errors).length === 0,
+    errors,
+    data: { email, password }
+  };
+}
+
 module.exports = {
-  validateProductInput
+  validateProductInput,
+  validateRegisterInput,
+  validateLoginInput
 };

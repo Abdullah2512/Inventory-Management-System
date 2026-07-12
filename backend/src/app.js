@@ -1,6 +1,7 @@
 const path = require("path");
 const express = require("express");
 const cors = require("cors");
+const authRoutes = require("./routes/auth.routes");
 const productRoutes = require("./routes/product.routes");
 const errorHandler = require("./middleware/errorHandler");
 
@@ -9,7 +10,7 @@ const app = express();
 const corsOptions = {
   origin: process.env.CORS_ORIGIN || "*",
   methods: ["GET", "POST", "PUT", "DELETE"],
-  allowedHeaders: ["Content-Type"]
+  allowedHeaders: ["Content-Type", "Authorization"]
 };
 
 app.use(cors(corsOptions));
@@ -22,6 +23,7 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
+app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 
 app.get("/", (req, res) => {

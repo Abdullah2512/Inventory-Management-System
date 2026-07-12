@@ -1,5 +1,48 @@
 const apiBaseUrl = "http://localhost:5001/api/products";
 
+// ---- Auth guard ----
+// Runs immediately, before anything else on the page, so an unauthenticated
+// visitor never sees dashboard content flash before being redirected.
+(function authGuard() {
+  const token = localStorage.getItem("authToken");
+  if (!token) {
+    window.location.href = "login.html";
+  }
+})();
+
+function getAuthToken() {
+  return localStorage.getItem("authToken");
+}
+
+function getAuthUser() {
+  try {
+    return JSON.parse(localStorage.getItem("authUser") || "null");
+  } catch (error) {
+    return null;
+  }
+}
+
+function authHeaders(extraHeaders) {
+  return {
+    ...(extraHeaders || {}),
+    Authorization: `Bearer ${getAuthToken()}`
+  };
+}
+
+function logout() {
+  localStorage.removeItem("authToken");
+  localStorage.removeItem("authUser");
+  window.location.href = "login.html";
+}
+
+// If the API says our token is no longer valid, force a clean logout
+// rather than leaving the user staring at a broken dashboard.
+function handleAuthFailure() {
+  localStorage.removeItem("authToken");
+  localStorage.removeItem("authUser");
+  window.location.href = "login.html";
+}
+
 // ---- DOM refs ----
 const productForm = document.getElementById("productForm");
 const productIdInput = document.getElementById("productId");
@@ -34,7 +77,10 @@ let sortDirection = "asc";
 let currentPage = 1;
 const pageSize = 8;
 
-document.addEventListener("DOMContentLoaded", loadProducts);
+document.addEventListener("DOMContentLoaded", () => {
+  renderUserChip();
+  loadProducts();
+});
 productForm.addEventListener("submit", handleFormSubmit);
 cancelEditButton.addEventListener("click", resetForm);
 openAddModalBtn.addEventListener("click", () => {
@@ -42,6 +88,26 @@ openAddModalBtn.addEventListener("click", () => {
   productModal.show();
 });
 productModalEl.addEventListener("hidden.bs.modal", resetForm);
+
+const logoutBtn = document.getElementById("logoutBtn");
+if (logoutBtn) {
+  logoutBtn.addEventListener("click", logout);
+}
+
+function renderUserChip() {
+  const user = getAuthUser();
+  const userNameEl = document.getElementById("userName");
+  const userEmailEl = document.getElementById("userEmail");
+  const userAvatarEl = document.getElementById("userAvatar");
+
+  if (!user || !userNameEl || !userEmailEl || !userAvatarEl) {
+    return;
+  }
+
+  userNameEl.textContent = user.name || "Account";
+  userEmailEl.textContent = user.email || "";
+  userAvatarEl.textContent = (user.name || "?").trim().charAt(0).toUpperCase();
+}
 
 searchInput.addEventListener("input", (event) => {
   searchTerm = event.target.value.trim().toLowerCase();
@@ -78,7 +144,9 @@ nextPageBtn.addEventListener("click", () => {
 async function loadProducts() {
   try {
     setTableLoading();
-    const response = await fetch(apiBaseUrl);
+    const response = await fetch(apiBaseUrl, {
+      headers: authHeaders()
+    });
     const data = await parseResponse(response);
     products = Array.isArray(data) ? data : [];
     currentPage = 1;
@@ -117,9 +185,9 @@ async function handleFormSubmit(event) {
 
     const response = await fetch(isEditing ? `${apiBaseUrl}/${productId}` : apiBaseUrl, {
       method: isEditing ? "PUT" : "POST",
-      headers: {
+      headers: authHeaders({
         "Content-Type": "application/json"
-      },
+      }),
       body: JSON.stringify(payload)
     });
 
@@ -273,7 +341,8 @@ async function deleteProduct(id) {
 
   try {
     const response = await fetch(`${apiBaseUrl}/${id}`, {
-      method: "DELETE"
+      method: "DELETE",
+      headers: authHeaders()
     });
 
     await parseResponse(response);
@@ -324,6 +393,11 @@ function validateProduct(product) {
 async function parseResponse(response) {
   if (response.status === 204) {
     return null;
+  }
+
+  if (response.status === 401 || response.status === 403) {
+    handleAuthFailure();
+    throw new Error("Your session has expired. Redirecting to login…");
   }
 
   const data = await response.json().catch(() => ({}));
