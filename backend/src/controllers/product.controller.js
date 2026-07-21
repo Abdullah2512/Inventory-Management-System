@@ -3,8 +3,9 @@ const { validateProductInput } = require("../utils/validators");
 
 async function getProducts(req, res, next) {
   try {
-    const products = await productModel.findAll();
-    res.json(products);
+    const { search, category, page, limit, sortBy, sortOrder } = req.query;
+    const result = await productModel.findAll({ search, category, page, limit, sortBy, sortOrder });
+    res.json(result);
   } catch (error) {
     next(error);
   }
@@ -59,9 +60,19 @@ async function deleteProduct(req, res, next) {
   }
 }
 
+async function getCategories(req, res, next) {
+  try {
+    const categories = await productModel.getCategories();
+    res.json(categories);
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
   getProducts,
   createProduct,
   updateProduct,
-  deleteProduct
+  deleteProduct,
+  getCategories
 };

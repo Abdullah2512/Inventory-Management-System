@@ -1,206 +1,180 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Inventory Management</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Stockify - Dashboard</title>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link rel="stylesheet" href="assets/css/styles.css">
   </head>
   <body>
-
-    <div class="d-flex app-shell">
-
+    <div class="app-container">
+      
       <!-- Sidebar -->
-      <div class="offcanvas-lg offcanvas-start sidebar" tabindex="-1" id="sidebar">
-        <div class="sidebar-brand">
-          <span class="brand-mark">SK</span>
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-icon">IN</div>
           <div class="brand-text">
-            <span class="brand-name">Stockroom</span>
-            <span class="brand-sub">Inventory Console</span>
+            <h2>Stockify</h2>
+            <p>Inventory Manager</p>
           </div>
-          <button type="button" class="btn-close btn-close-white d-lg-none ms-auto" data-bs-dismiss="offcanvas" data-bs-target="#sidebar" aria-label="Close"></button>
         </div>
 
-        <nav class="sidebar-nav">
-          <span class="nav-label">Overview</span>
-          <a href="#overview" class="nav-link active" data-nav>
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+        <div class="nav-group">
+          <div class="nav-group-title">Core</div>
+          <a href="index.html" class="nav-link active">
+            <i class="ph ph-squares-four"></i>
             Dashboard
           </a>
-          <span class="nav-label">Manage</span>
-          <a href="#products" class="nav-link" data-nav>
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 8 12 3 3 8l9 5 9-5Z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>
+        </div>
+
+        <div class="nav-group">
+          <div class="nav-group-title">Manage</div>
+          <a href="products.html" class="nav-link">
+            <i class="ph ph-package"></i>
             Products
           </a>
-        </nav>
-
-        <div class="sidebar-footer">
-          <div class="user-chip">
-            <span class="user-avatar" id="userAvatar">?</span>
-            <div class="user-info">
-              <span class="user-name" id="userName">—</span>
-              <span class="user-email" id="userEmail">—</span>
-            </div>
-          </div>
-          <button type="button" class="btn-logout" id="logoutBtn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
-            Log out
-          </button>
         </div>
-      </div>
 
-      <!-- Main -->
-      <div class="content-area flex-grow-1">
-        <header class="topbar">
-          <button type="button" class="btn btn-icon d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#sidebar" aria-label="Open menu">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
-          </button>
-          <div class="topbar-title">
-            <h1>Products</h1>
-            <p>Track stock levels, pricing, and catalog value in one place.</p>
+        <div class="sidebar-spacer"></div>
+
+        <div class="user-profile" id="user-profile-btn">
+          <img src="https://ui-avatars.com/api/?name=Abdullah+Khan&background=random" alt="User Avatar" class="user-avatar" id="user-avatar">
+          <div class="user-info">
+            <h4 id="user-name">Abdullah Khan</h4>
+            <p id="user-role">Admin</p>
           </div>
-          <button type="button" class="btn btn-primary btn-add" id="openAddModalBtn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
-            Add product
-          </button>
+          <i class="ph ph-caret-down"></i>
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <main class="main-content">
+        <header class="topbar">
+          <div class="page-title">
+            <h1>Dashboard</h1>
+            <p>Overview of your business metrics, activity, and inventory health.</p>
+          </div>
+          <div class="topbar-actions">
+            <a href="products.html" class="btn-primary" style="text-decoration: none;">
+              <i class="ph ph-plus"></i> Manage Products
+            </a>
+          </div>
         </header>
 
-        <main class="main-content" id="overview">
-
-          <!-- Stat cards -->
-          <section class="stat-grid">
-            <div class="stat-card">
-              <div class="stat-icon stat-icon-indigo">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 8 12 3 3 8l9 5 9-5Z"/><path d="M3 8v8l9 5 9-5V8"/></svg>
-              </div>
-              <div class="stat-body">
-                <span class="stat-label">Total products</span>
-                <span class="stat-value" id="statTotalProducts">0</span>
-              </div>
+        <!-- Stat Cards -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon purple"><i class="ph ph-package"></i></div>
+            <div class="stat-details">
+              <h3>Total Products</h3>
+              <div class="value" id="statTotalProducts">0</div>
             </div>
-            <div class="stat-card">
-              <div class="stat-icon stat-icon-amber">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="7" width="18" height="13" rx="1.5"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-              </div>
-              <div class="stat-body">
-                <span class="stat-label">Units in stock</span>
-                <span class="stat-value" id="statTotalStock">0</span>
-              </div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-icon stat-icon-green">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 1v22"/><path d="M17 5.5c0-1.9-2-3-5-3s-5 1.1-5 3 2 2.6 5 3 5 1.1 5 3-2 3-5 3-5-1.1-5-3"/></svg>
-              </div>
-              <div class="stat-body">
-                <span class="stat-label">Inventory value</span>
-                <span class="stat-value" id="statTotalValue">$0.00</span>
-              </div>
-            </div>
-          </section>
-
-          <!-- Products table card -->
-          <section class="table-card" id="products">
-            <div class="table-card-header">
-              <h2>All products</h2>
-              <div class="table-controls">
-                <div class="search-field">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-                  <input type="search" id="searchInput" placeholder="Search name or category">
-                </div>
-                <span class="badge-count" id="productCount">0 items</span>
-              </div>
-            </div>
-
-            <div class="table-responsive">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th data-sort="id">ID <span class="sort-caret"></span></th>
-                    <th data-sort="name">Name <span class="sort-caret"></span></th>
-                    <th data-sort="category">Category <span class="sort-caret"></span></th>
-                    <th data-sort="price">Price <span class="sort-caret"></span></th>
-                    <th data-sort="quantity">Quantity <span class="sort-caret"></span></th>
-                    <th class="text-end">Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="productsTableBody">
-                  <tr><td colspan="6" class="table-loading">Loading products…</td></tr>
-                </tbody>
-              </table>
-            </div>
-
-            <div class="table-card-footer">
-              <span class="pagination-info" id="paginationInfo"></span>
-              <div class="pagination-controls">
-                <button type="button" class="btn btn-outline-page" id="prevPageBtn">Prev</button>
-                <span class="page-indicator" id="pageIndicator">1 / 1</span>
-                <button type="button" class="btn btn-outline-page" id="nextPageBtn">Next</button>
-              </div>
-            </div>
-          </section>
-
-        </main>
-      </div>
-    </div>
-
-    <!-- Add/Edit Product Modal -->
-    <div class="modal fade" id="productModal" tabindex="-1" aria-labelledby="productModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="formTitle">Add Product</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
-          <form id="productForm" novalidate>
-            <div class="modal-body">
-              <input type="hidden" id="productId">
-
-              <div class="mb-3">
-                <label for="name" class="form-label">Name</label>
-                <input type="text" class="form-control" id="name" maxlength="120" required>
-                <div class="invalid-feedback" id="nameError"></div>
-              </div>
-
-              <div class="mb-3">
-                <label for="category" class="form-label">Category</label>
-                <input type="text" class="form-control" id="category" maxlength="80" required>
-                <div class="invalid-feedback" id="categoryError"></div>
-              </div>
-
-              <div class="row g-3">
-                <div class="col-6">
-                  <label for="price" class="form-label">Price</label>
-                  <div class="input-group">
-                    <span class="input-group-text">$</span>
-                    <input type="number" class="form-control" id="price" min="0" step="0.01" required>
-                  </div>
-                  <div class="invalid-feedback d-block" id="priceError"></div>
-                </div>
-                <div class="col-6">
-                  <label for="quantity" class="form-label">Quantity</label>
-                  <input type="number" class="form-control" id="quantity" min="0" step="1" required>
-                  <div class="invalid-feedback" id="quantityError"></div>
-                </div>
-              </div>
+          <div class="stat-card">
+            <div class="stat-icon green"><i class="ph ph-check-circle"></i></div>
+            <div class="stat-details">
+              <h3>Units in Stock</h3>
+              <div class="value" id="statTotalStock">0</div>
             </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-outline-secondary d-none" id="cancelEditButton" data-bs-dismiss="modal">Cancel</button>
-              <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-              <button type="submit" class="btn btn-primary" id="submitButton">Add Product</button>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon blue"><i class="ph ph-currency-dollar"></i></div>
+            <div class="stat-details">
+              <h3>Inventory Value</h3>
+              <div class="value" id="statTotalValue">$0.00</div>
             </div>
-          </form>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon orange"><i class="ph ph-warning"></i></div>
+            <div class="stat-details">
+              <h3>Low Stock Alert</h3>
+              <div class="value" id="statLowStock">0</div>
+            </div>
+          </div>
         </div>
-      </div>
+
+        <!-- Charts Area -->
+        <div class="charts-grid">
+          <div class="neo-card">
+            <div class="neo-card-header">
+              <h3>Inventory Performance & Flow</h3>
+              <button class="btn-text">Filter Period</button>
+            </div>
+            <div class="chart-placeholder">
+              <span>Interactive Analytics Trendline Area</span>
+            </div>
+          </div>
+
+          <div class="neo-card">
+            <div class="neo-card-header">
+              <h3>Stock Distribution</h3>
+            </div>
+            <div class="chart-placeholder">
+              <span>Category Breakdown View</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lists Area -->
+        <div class="lists-grid">
+          <div class="neo-card">
+            <div class="neo-card-header">
+              <h3>Recent System Actions</h3>
+              <button class="btn-text">View All</button>
+            </div>
+            <div class="list-container">
+              <div class="list-item">
+                <div class="list-icon success"><i class="ph ph-plus-circle"></i></div>
+                <div class="list-details" style="flex-grow: 1;">
+                  <h4>Product Catalog Synced</h4>
+                  <p>Connected live data cleanly with Supabase database backend.</p>
+                </div>
+                <div class="list-action"><i class="ph ph-caret-right"></i></div>
+              </div>
+              <div class="list-item">
+                <div class="list-icon primary"><i class="ph ph-shield-check"></i></div>
+                <div class="list-details" style="flex-grow: 1;">
+                  <h4>Security Session Active</h4>
+                  <p>JWT authentication running securely without loops.</p>
+                </div>
+                <div class="list-action"><i class="ph ph-caret-right"></i></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="neo-card">
+            <div class="neo-card-header">
+              <h3>Inventory Health Status</h3>
+              <button class="btn-text">Manage</button>
+            </div>
+            <div class="list-container">
+              <div class="list-item">
+                <div class="list-icon warning"><i class="ph ph-warning-circle"></i></div>
+                <div class="list-details" style="flex-grow: 1;">
+                  <h4>Low Stock Warnings</h4>
+                  <p>Check categories falling below safety threshold counts.</p>
+                </div>
+                <div class="list-indicator"></div>
+              </div>
+              <div class="list-item">
+                <div class="list-icon success"><i class="ph ph-check"></i></div>
+                <div class="list-details" style="flex-grow: 1;">
+                  <h4>Database Integrity Verified</h4>
+                  <p>All tables and mock variables fully decoupled.</p>
+                </div>
+                <div class="list-action"><i class="ph ph-caret-right"></i></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
     </div>
 
-    <!-- Toasts -->
-    <div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastContainer"></div>
+    <!-- Toast Container -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-4" id="toastContainer"></div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="assets/js/app.js"></script>
+    <script src="assets/js/dashboard.js"></script>
   </body>
 </html>

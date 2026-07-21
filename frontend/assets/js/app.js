@@ -1,8 +1,7 @@
-const apiBaseUrl = "http://localhost:5001/api/products";
+/* frontend/assets/js/app.js */
+const apiBaseUrl = "/api/products";
 
 // ---- Auth guard ----
-// Runs immediately, before anything else on the page, so an unauthenticated
-// visitor never sees dashboard content flash before being redirected.
 (function authGuard() {
   const token = localStorage.getItem("authToken");
   if (!token) {
@@ -35,8 +34,6 @@ function logout() {
   window.location.href = "login.html";
 }
 
-// If the API says our token is no longer valid, force a clean logout
-// rather than leaving the user staring at a broken dashboard.
 function handleAuthFailure() {
   localStorage.removeItem("authToken");
   localStorage.removeItem("authUser");
@@ -57,6 +54,7 @@ const submitButton = document.getElementById("submitButton");
 const cancelEditButton = document.getElementById("cancelEditButton");
 const openAddModalBtn = document.getElementById("openAddModalBtn");
 const searchInput = document.getElementById("searchInput");
+const categoryFilter = document.getElementById("categoryFilter");
 const prevPageBtn = document.getElementById("prevPageBtn");
 const nextPageBtn = document.getElementById("nextPageBtn");
 const pageIndicator = document.getElementById("pageIndicator");
@@ -67,27 +65,43 @@ const statTotalValue = document.getElementById("statTotalValue");
 const toastContainer = document.getElementById("toastContainer");
 
 const productModalEl = document.getElementById("productModal");
-const productModal = new bootstrap.Modal(productModalEl);
+let productModal = null;
 
 // ---- State ----
 let products = [];
 let searchTerm = "";
+let selectedCategory = "";
 let sortKey = "id";
 let sortDirection = "asc";
 let currentPage = 1;
 const pageSize = 8;
 
 document.addEventListener("DOMContentLoaded", () => {
+  if (productModalEl) {
+    productModal = new bootstrap.Modal(productModalEl);
+  }
   renderUserChip();
   loadProducts();
+  loadCategories();
 });
-productForm.addEventListener("submit", handleFormSubmit);
-cancelEditButton.addEventListener("click", resetForm);
-openAddModalBtn.addEventListener("click", () => {
-  resetForm();
-  productModal.show();
-});
-productModalEl.addEventListener("hidden.bs.modal", resetForm);
+
+if (productForm) {
+  productForm.addEventListener("submit", handleFormSubmit);
+}
+if (cancelEditButton) {
+  cancelEditButton.addEventListener("click", resetForm);
+}
+if (openAddModalBtn) {
+  openAddModalBtn.addEventListener("click", () => {
+    resetForm();
+    if (productModal) {
+      productModal.show();
+    }
+  });
+}
+if (productModalEl) {
+  productModalEl.addEventListener("hidden.bs.modal", resetForm);
+}
 
 const logoutBtn = document.getElementById("logoutBtn");
 if (logoutBtn) {
@@ -109,11 +123,21 @@ function renderUserChip() {
   userAvatarEl.textContent = (user.name || "?").trim().charAt(0).toUpperCase();
 }
 
-searchInput.addEventListener("input", (event) => {
-  searchTerm = event.target.value.trim().toLowerCase();
-  currentPage = 1;
-  renderProducts();
-});
+if (searchInput) {
+  searchInput.addEventListener("input", (event) => {
+    searchTerm = event.target.value.trim();
+    currentPage = 1;
+    loadProducts();
+  });
+}
+
+if (categoryFilter) {
+  categoryFilter.addEventListener("change", (event) => {
+    selectedCategory = event.target.value;
+    currentPage = 1;
+    loadProducts();
+  });
+}
 
 document.querySelectorAll("[data-sort]").forEach((th) => {
   th.addEventListener("click", () => {
@@ -124,36 +148,119 @@ document.querySelectorAll("[data-sort]").forEach((th) => {
       sortKey = key;
       sortDirection = "asc";
     }
-    renderProducts();
+    currentPage = 1;
+    loadProducts();
   });
 });
 
-prevPageBtn.addEventListener("click", () => {
-  if (currentPage > 1) {
-    currentPage -= 1;
-    renderProducts();
-  }
-});
+if (prevPageBtn) {
+  prevPageBtn.addEventListener("click", () => {
+    if (currentPage > 1) {
+      currentPage -= 1;
+      loadProducts();
+    }
+  });
+}
 
-nextPageBtn.addEventListener("click", () => {
-  currentPage += 1;
-  renderProducts();
-});
+if (nextPageBtn) {
+  nextPageBtn.addEventListener("click", () => {
+    currentPage += 1;
+    loadProducts();
+  });
+}
 
 // ---- Data loading ----
 async function loadProducts() {
   try {
     setTableLoading();
-    const response = await fetch(apiBaseUrl, {
+    
+    const params = new URLSearchParams({
+      search: searchTerm,
+      category: selectedCategory,
+      page: currentPage,
+      limit: pageSize,
+      sortBy: sortKey,
+      sortOrder: sortDirection
+    });
+    
+    const response = await fetch(`${apiBaseUrl}?${params.toString()}`, {
       headers: authHeaders()
     });
+    
     const data = await parseResponse(response);
-    products = Array.isArray(data) ? data : [];
-    currentPage = 1;
-    renderProducts();
+    
+    // Normalize data safely whether API responds with plain array, wrapper object, or data field
+    if (Array.isArray(data)) {
+      products = data;
+    } else {
+      products = data.products || data.data || [];
+    }
+
+    const totalItems = typeof data.total === 'number' ? data.total : products.length;
+    currentPage = data.page || 1;
+    const totalPages = data.totalPages || Math.ceil(totalItems / pageSize) || 1;
+    
+    const stats = data.stats || {
+      totalProducts: totalItems,
+      totalStock: products.reduce((sum, p) => sum + Number(p.quantity || 0), 0),
+      totalValue: products.reduce((sum, p) => sum + (Number(p.price || 0) * Number(p.quantity || 0)), 0)
+    };
+
+    if (statTotalProducts) statTotalProducts.textContent = (stats.totalProducts || 0).toLocaleString();
+    if (statTotalStock) statTotalStock.textContent = (stats.totalStock || 0).toLocaleString();
+    if (statTotalValue) statTotalValue.textContent = `$${(stats.totalValue || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    
+    if (productCount) productCount.textContent = `${totalItems} ${totalItems === 1 ? "item" : "items"}`;
+    updateSortIndicators();
+    
+    if (products.length === 0) {
+      if (searchTerm || selectedCategory) {
+        setTableMessage(`No products match the selected criteria.`, false);
+      } else {
+        setTableMessage("No products yet. Add your first product to get started.", false, true);
+      }
+    } else {
+      productsTableBody.innerHTML = products.map(rowTemplate).join("");
+    }
+    
+    const startIdx = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+    const endIdx = Math.min(currentPage * pageSize, totalItems);
+    if (paginationInfo) {
+      paginationInfo.textContent = totalItems === 0 ? "" : `Showing ${startIdx}–${endIdx} of ${totalItems}`;
+    }
+      
+    if (pageIndicator) pageIndicator.textContent = `${currentPage} / ${totalPages}`;
+    if (prevPageBtn) prevPageBtn.disabled = currentPage <= 1;
+    if (nextPageBtn) nextPageBtn.disabled = currentPage >= totalPages;
+    
   } catch (error) {
     setTableMessage("Unable to load products.", true);
     showToast(error.message, "danger");
+  }
+}
+
+async function loadCategories() {
+  try {
+    const response = await fetch(`${apiBaseUrl}/categories`, {
+      headers: authHeaders()
+    });
+    const data = await parseResponse(response);
+    const categories = Array.isArray(data) ? data : (data.categories || data.data || []);
+    
+    if (categoryFilter) {
+      categoryFilter.innerHTML = '<option value="">All Categories</option>';
+      categories.forEach(cat => {
+        const option = document.createElement("option");
+        option.value = cat;
+        option.textContent = cat;
+        if (cat === selectedCategory) {
+          option.selected = true;
+        }
+        categoryFilter.appendChild(option);
+      });
+    }
+  } catch (error) {
+    console.error("Failed to load categories:", error);
   }
 }
 
@@ -191,18 +298,19 @@ async function handleFormSubmit(event) {
       body: JSON.stringify(payload)
     });
 
-    const savedProduct = await parseResponse(response);
+    await parseResponse(response);
 
     if (isEditing) {
-      products = products.map((product) => product.id === savedProduct.id ? savedProduct : product);
       showToast("Product updated successfully.", "success");
     } else {
-      products = [...products, savedProduct];
       showToast("Product added successfully.", "success");
     }
 
-    renderProducts();
-    productModal.hide();
+    loadProducts();
+    loadCategories();
+    if (productModal) {
+      productModal.hide();
+    }
     resetForm();
   } catch (error) {
     showToast(error.message, "danger");
@@ -212,74 +320,29 @@ async function handleFormSubmit(event) {
   }
 }
 
-// ---- Rendering ----
-function getFilteredSortedProducts() {
-  let list = products;
-
-  if (searchTerm) {
-    list = list.filter((product) =>
-      String(product.name).toLowerCase().includes(searchTerm) ||
-      String(product.category).toLowerCase().includes(searchTerm)
-    );
-  }
-
-  const direction = sortDirection === "asc" ? 1 : -1;
-  list = [...list].sort((a, b) => {
-    const aVal = a[sortKey];
-    const bVal = b[sortKey];
-    if (typeof aVal === "string") {
-      return aVal.localeCompare(bVal) * direction;
-    }
-    return (Number(aVal) - Number(bVal)) * direction;
-  });
-
-  return list;
-}
-
-function renderProducts() {
-  renderStats();
-
-  const filtered = getFilteredSortedProducts();
-  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
-  currentPage = Math.min(currentPage, totalPages);
-  const start = (currentPage - 1) * pageSize;
-  const pageItems = filtered.slice(start, start + pageSize);
-
-  productCount.textContent = `${filtered.length} ${filtered.length === 1 ? "item" : "items"}`;
-  updateSortIndicators();
-
-  if (products.length === 0) {
-    setTableMessage("No products yet. Add your first product to get started.", false, true);
-  } else if (filtered.length === 0) {
-    setTableMessage(`No products match “${searchInput.value.trim()}”.`, false);
-  } else {
-    productsTableBody.innerHTML = pageItems.map(rowTemplate).join("");
-  }
-
-  paginationInfo.textContent = filtered.length === 0
-    ? ""
-    : `Showing ${start + 1}–${Math.min(start + pageSize, filtered.length)} of ${filtered.length}`;
-  pageIndicator.textContent = `${currentPage} / ${totalPages}`;
-  prevPageBtn.disabled = currentPage <= 1;
-  nextPageBtn.disabled = currentPage >= totalPages;
-}
-
+// ---- Rendering Helpers ----
 function rowTemplate(product) {
-  const qtyClass = Number(product.quantity) <= 5 ? "cell-qty cell-qty-low" : "cell-qty";
+  const pId = product.id || product.ID || product._id;
+  const pName = product.name || product.Name || "";
+  const pCategory = product.category || product.Category || "";
+  const pPrice = Number(product.price || product.Price || 0);
+  const pQty = Number(product.quantity || product.Quantity || 0);
+
+  const qtyClass = pQty <= 5 ? "cell-qty cell-qty-low" : "cell-qty";
   return `
     <tr>
-      <td class="cell-id">#${escapeHtml(String(product.id))}</td>
-      <td class="cell-name">${escapeHtml(product.name)}</td>
-      <td><span class="cell-category">${escapeHtml(product.category)}</span></td>
-      <td class="cell-price">$${Number(product.price).toFixed(2)}</td>
-      <td class="${qtyClass}">${escapeHtml(String(product.quantity))}</td>
+      <td class="cell-id">#${escapeHtml(String(pId))}</td>
+      <td class="cell-name">${escapeHtml(pName)}</td>
+      <td><span class="cell-category">${escapeHtml(pCategory)}</span></td>
+      <td class="cell-price">$${pPrice.toFixed(2)}</td>
+      <td class="${qtyClass}">${escapeHtml(String(pQty))}</td>
       <td>
         <div class="action-buttons">
-          <button class="btn-action" type="button" title="Edit" onclick="startEdit(${product.id})">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+          <button class="btn-action" type="button" title="Edit" onclick="startEdit(${pId})">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
           </button>
-          <button class="btn-action danger" type="button" title="Delete" onclick="deleteProduct(${product.id})">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+          <button class="btn-action danger" type="button" title="Delete" onclick="deleteProduct(${pId})">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
           </button>
         </div>
       </td>
@@ -287,20 +350,11 @@ function rowTemplate(product) {
   `;
 }
 
-function renderStats() {
-  const totalProducts = products.length;
-  const totalStock = products.reduce((sum, product) => sum + Number(product.quantity || 0), 0);
-  const totalValue = products.reduce((sum, product) => sum + (Number(product.price || 0) * Number(product.quantity || 0)), 0);
-
-  statTotalProducts.textContent = totalProducts.toLocaleString();
-  statTotalStock.textContent = totalStock.toLocaleString();
-  statTotalValue.textContent = `$${totalValue.toFixed(2)}`;
-}
-
 function updateSortIndicators() {
   document.querySelectorAll("[data-sort]").forEach((th) => {
     const key = th.getAttribute("data-sort");
     const caret = th.querySelector(".sort-caret");
+    if (!caret) return;
     th.classList.toggle("sort-active", key === sortKey);
     if (key === sortKey) {
       caret.textContent = sortDirection === "asc" ? "▲" : "▼";
@@ -311,29 +365,32 @@ function updateSortIndicators() {
 }
 
 // ---- Edit / Delete ----
-function startEdit(id) {
-  const product = products.find((item) => item.id === id);
+window.startEdit = function(id) {
+  const product = products.find((item) => (item.id === id || item.ID === id || item._id === id));
 
   if (!product) {
     showToast("Product not found.", "danger");
     return;
   }
 
-  productIdInput.value = product.id;
-  nameInput.value = product.name;
-  categoryInput.value = product.category;
-  priceInput.value = product.price;
-  quantityInput.value = product.quantity;
+  productIdInput.value = product.id || product.ID || product._id;
+  nameInput.value = product.name || product.Name || "";
+  categoryInput.value = product.category || product.Category || "";
+  priceInput.value = product.price || product.Price || 0;
+  quantityInput.value = product.quantity || product.Quantity || 0;
   formTitle.textContent = "Edit Product";
   submitButton.textContent = "Save Changes";
   cancelEditButton.classList.remove("d-none");
-  productModal.show();
+  
+  if (productModal) {
+    productModal.show();
+  }
   window.setTimeout(() => nameInput.focus(), 300);
 }
 
-async function deleteProduct(id) {
-  const product = products.find((item) => item.id === id);
-  const confirmed = window.confirm(`Delete ${product ? product.name : "this product"}?`);
+window.deleteProduct = async function(id) {
+  const product = products.find((item) => (item.id === id || item.ID === id || item._id === id));
+  const confirmed = window.confirm(`Delete ${product ? (product.name || product.Name) : "this product"}?`);
 
   if (!confirmed) {
     return;
@@ -346,9 +403,9 @@ async function deleteProduct(id) {
     });
 
     await parseResponse(response);
-    products = products.filter((productItem) => productItem.id !== id);
-    renderProducts();
     showToast("Product deleted successfully.", "success");
+    loadProducts();
+    loadCategories();
   } catch (error) {
     showToast(error.message, "danger");
   }
@@ -417,42 +474,43 @@ function showValidationErrors(errors) {
     const input = document.getElementById(field);
     const errorElement = document.getElementById(`${field}Error`);
 
-    input.classList.add("is-invalid");
-    errorElement.textContent = message;
+    if (input) input.classList.add("is-invalid");
+    if (errorElement) errorElement.textContent = message;
   });
 }
 
 function clearValidationErrors() {
   [nameInput, categoryInput, priceInput, quantityInput].forEach((input) => {
-    input.classList.remove("is-invalid");
+    if (input) input.classList.remove("is-invalid");
   });
 
   ["nameError", "categoryError", "priceError", "quantityError"].forEach((id) => {
-    document.getElementById(id).textContent = "";
+    const el = document.getElementById(id);
+    if (el) el.textContent = "";
   });
 }
 
 // ---- Table state messages ----
 function setTableLoading() {
+  if (!productsTableBody) return;
   productsTableBody.innerHTML = `
     <tr>
-      <td colspan="6" class="table-loading">
-        <div class="spinner-cell"><span class="spinner-ring"></span> Loading products…</div>
+      <td colspan="6" class="text-center py-4">
+        <div class="spinner-border spinner-border-sm text-secondary me-2" role="status"></div> Loading products…
       </td>
     </tr>
   `;
 }
 
 function setTableMessage(message, isError, isEmpty) {
+  if (!productsTableBody) return;
   if (isEmpty) {
     productsTableBody.innerHTML = `
       <tr>
-        <td colspan="6" class="table-empty">
-          <div class="empty-illustration">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 8 12 3 3 8l9 5 9-5Z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>
-          </div>
-          <div class="empty-title">No products yet</div>
-          <div class="empty-sub">${escapeHtml(message.replace("No products yet. ", ""))}</div>
+        <td colspan="6" class="text-center py-5 text-muted">
+          <div class="mb-2">📦</div>
+          <div class="fw-bold">No products yet</div>
+          <div class="small">${escapeHtml(message.replace("No products yet. ", ""))}</div>
         </td>
       </tr>
     `;
@@ -461,26 +519,22 @@ function setTableMessage(message, isError, isEmpty) {
 
   productsTableBody.innerHTML = `
     <tr>
-      <td colspan="6" class="${isError ? "table-empty" : "table-empty"}">${escapeHtml(message)}</td>
+      <td colspan="6" class="text-center py-4 text-muted">${escapeHtml(message)}</td>
     </tr>
   `;
 }
 
 // ---- Toasts ----
 function showToast(message, type) {
+  if (!toastContainer) return;
   const isSuccess = type === "success";
   const toastEl = document.createElement("div");
-  toastEl.className = `toast app-toast ${isSuccess ? "success" : "danger"}`;
+  toastEl.className = `toast align-items-center text-white ${isSuccess ? "bg-success" : "bg-danger"} border-0 mb-2`;
   toastEl.setAttribute("role", "alert");
   toastEl.innerHTML = `
-    <div class="toast-body d-flex align-items-center">
-      <svg class="toast-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        ${isSuccess
-          ? '<path d="M20 6 9 17l-5-5"/>'
-          : '<circle cx="12" cy="12" r="10"/><path d="M12 8v5"/><path d="M12 16h.01"/>'}
-      </svg>
-      <span class="flex-grow-1">${escapeHtml(message)}</span>
-      <button type="button" class="btn-close ms-2" data-bs-dismiss="toast" aria-label="Close"></button>
+    <div class="d-flex">
+      <div class="toast-body">${escapeHtml(message)}</div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
     </div>
   `;
   toastContainer.appendChild(toastEl);

@@ -1,4 +1,4 @@
-const authApiBaseUrl = "http://localhost:5001/api/auth";
+const authApiBaseUrl = "/api/auth";
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // If already logged in, skip straight to the dashboard.
@@ -59,36 +59,6 @@ function togglePasswordVisibility(buttonEl, inputEl) {
   buttonEl.innerHTML = isHidden
     ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/><path d="M3 3l18 18"/></svg>'
     : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>';
-}
-
-function setButtonLoading(buttonEl, isLoading, loadingText, defaultText) {
-  buttonEl.disabled = isLoading;
-  buttonEl.classList.toggle("is-loading", isLoading);
-  const labelEl = buttonEl.querySelector(".btn-label");
-  if (labelEl) {
-    labelEl.textContent = isLoading ? loadingText : defaultText;
-  }
-}
-
-async function parseAuthResponse(response) {
-  const data = await response.json().catch(() => ({}));
-
-  if (!response.ok) {
-    const error = new Error(data.message || "Request failed.");
-    error.status = response.status;
-    error.fieldErrors = data.errors || null;
-    throw error;
-  }
-
-  return data;
-}
-
-function persistSession(payload) {
-  if (!payload || !payload.token) {
-    return;
-  }
-  localStorage.setItem("authToken", payload.token);
-  localStorage.setItem("authUser", JSON.stringify(payload.user || null));
 }
 
 // ---------------- Register page ----------------
@@ -165,7 +135,7 @@ function initRegisterForm() {
 
     if (hasError) return;
 
-    setButtonLoading(submitBtn, true, "Creating account…", "Create account");
+    submitBtn.disabled = true;
 
     try {
       const response = await fetch(`${authApiBaseUrl}/register`, {
@@ -193,7 +163,7 @@ function initRegisterForm() {
       }
       showToast(error.message, "danger");
     } finally {
-      setButtonLoading(submitBtn, false, "Creating account…", "Create account");
+      submitBtn.disabled = false;
     }
   });
 }
@@ -233,7 +203,7 @@ function initLoginForm() {
     }
     if (hasError) return;
 
-    setButtonLoading(submitBtn, true, "Signing in…", "Sign in");
+    submitBtn.disabled = true;
 
     try {
       const response = await fetch(`${authApiBaseUrl}/login`, {
@@ -255,9 +225,30 @@ function initLoginForm() {
         showToast(error.message, "danger");
       }
     } finally {
-      setButtonLoading(submitBtn, false, "Signing in…", "Sign in");
+      submitBtn.disabled = false;
     }
   });
+}
+
+async function parseAuthResponse(response) {
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    const error = new Error(data.message || "Request failed.");
+    error.status = response.status;
+    error.fieldErrors = data.errors || null;
+    throw error;
+  }
+
+  return data;
+}
+
+function persistSession(payload) {
+  if (!payload || !payload.token) {
+    return;
+  }
+  localStorage.setItem("authToken", payload.token);
+  localStorage.setItem("authUser", JSON.stringify(payload.user || null));
 }
 
 document.addEventListener("DOMContentLoaded", () => {
