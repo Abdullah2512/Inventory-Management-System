@@ -3,89 +3,78 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Create account · Stockroom</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Register · Stockroom</title>
+    <link rel="stylesheet" href="assets/css/styles.css">
     <link rel="stylesheet" href="assets/css/auth.css">
   </head>
-  <body>
+  <body class="auth-page">
+    <main class="auth-shell">
+      <section class="auth-panel">
+        <a class="brand compact" href="login.html">
+          <span class="brand-mark">SR</span>
+          <span>
+            <strong>Stockroom</strong>
+            <small>Inventory Console</small>
+          </span>
+        </a>
 
-    <div class="auth-backdrop">
-      <div class="auth-blob b1"></div>
-      <div class="auth-blob b2"></div>
-      <div class="auth-blob b3"></div>
-      <div class="auth-grid-overlay"></div>
-    </div>
-
-    <div class="auth-shell">
-      <div class="auth-brand">
-        <span class="brand-mark">SK</span>
-        <div class="brand-text">
-          <span class="brand-name">Stockroom</span>
-          <span class="brand-sub">Inventory Console</span>
+        <div>
+          <h1>Create account</h1>
+          <p>Set up your secure workspace and start managing real product data.</p>
         </div>
-      </div>
 
-      <div class="auth-card">
-        <h1 class="auth-heading">Create your account</h1>
-        <p class="auth-subtext">Start tracking your inventory in minutes.</p>
+        <form id="registerForm" class="form-stack" novalidate>
+          <label class="field">
+            <span>Name</span>
+            <input id="name" type="text" autocomplete="name" maxlength="120" placeholder="Jane Doe">
+            <small id="nameError" class="field-error"></small>
+          </label>
 
-        <form id="registerForm" novalidate>
-          <div class="auth-field">
-            <label for="name" class="auth-label">Name</label>
-            <div class="auth-input-wrap">
-              <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>
-              <input type="text" id="name" placeholder="Jane Doe" autocomplete="name" maxlength="120" required>
+          <label class="field">
+            <span>Email</span>
+            <input id="email" type="email" autocomplete="email" placeholder="you@example.com">
+            <small id="emailError" class="field-error"></small>
+          </label>
+
+          <label class="field">
+            <span>Password</span>
+            <div class="input-action">
+              <input id="password" type="password" autocomplete="new-password" placeholder="At least 6 characters">
+              <button type="button" data-password-toggle="password">Show</button>
             </div>
-            <div class="field-error" id="nameError"></div>
-          </div>
+            <small id="passwordHint" class="field-hint"></small>
+            <small id="passwordError" class="field-error"></small>
+          </label>
 
-          <div class="auth-field">
-            <label for="email" class="auth-label">Email</label>
-            <div class="auth-input-wrap">
-              <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg>
-              <input type="email" id="email" placeholder="you@example.com" autocomplete="email" required>
-            </div>
-            <div class="field-error" id="emailError"></div>
-          </div>
+          <label class="field">
+            <span>Confirm Password</span>
+            <input id="confirmPassword" type="password" autocomplete="new-password" placeholder="Re-enter your password">
+            <small id="confirmPasswordError" class="field-error"></small>
+          </label>
 
-          <div class="auth-field">
-            <label for="password" class="auth-label">Password</label>
-            <div class="auth-input-wrap">
-              <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-              <input type="password" id="password" placeholder="At least 6 characters" autocomplete="new-password" required>
-              <button type="button" class="field-toggle" id="togglePassword" aria-label="Show password">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-              </button>
-            </div>
-            <div class="field-hint" id="passwordHint"></div>
-            <div class="field-error" id="passwordError"></div>
-          </div>
-
-          <div class="auth-field">
-            <label for="confirmPassword" class="auth-label">Confirm password</label>
-            <div class="auth-input-wrap">
-              <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-              <input type="password" id="confirmPassword" placeholder="Re-enter your password" autocomplete="new-password" required>
-            </div>
-            <div class="field-error" id="confirmPasswordError"></div>
-          </div>
-
-          <button type="submit" class="auth-submit" id="registerSubmit">
-            <span class="btn-spinner"></span>
-            <span class="btn-label">Create account</span>
+          <button id="registerSubmit" class="primary-button" type="submit">
+            <span>Create account</span>
           </button>
         </form>
 
-        <p class="auth-switch">Already have an account? <a href="login.html">Log in</a></p>
-      </div>
-    </div>
+        <p class="auth-switch">Already registered? <a href="login.html">Sign in</a></p>
+      </section>
 
-    <div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastContainer"></div>
+      <aside class="auth-showcase">
+        <div class="showcase-metric">
+          <span>Secure session</span>
+          <strong>Token based</strong>
+        </div>
+        <div class="showcase-copy">
+          <h2>Built for fast catalog operations.</h2>
+          <p>Upload product images, filter inventory, and see stock value from live backend data.</p>
+        </div>
+      </aside>
+    </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <div id="toastContainer" class="toast-container"></div>
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/utils.js"></script>
     <script src="assets/js/auth.js"></script>
   </body>
 </html>

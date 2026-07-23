@@ -1,9 +1,13 @@
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MIN_PASSWORD_LENGTH = 6;
+
 function validateProductInput(input) {
   const errors = {};
-  const name = typeof input.name === "string" ? input.name.trim() : "";
-  const category = typeof input.category === "string" ? input.category.trim() : "";
-  const price = Number(input.price);
-  const quantity = Number(input.quantity);
+  const body = input || {};
+  const name = typeof body.name === "string" ? body.name.trim() : "";
+  const category = typeof body.category === "string" ? body.category.trim() : "";
+  const price = Number(body.price);
+  const quantity = Number(body.quantity);
 
   if (!name) {
     errors.name = "Product name is required.";
@@ -37,18 +41,12 @@ function validateProductInput(input) {
   };
 }
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const MIN_PASSWORD_LENGTH = 6;
-
-/**
- * Validates registration input: name, email, password all required,
- * email must look like an email, password must meet minimum length.
- */
 function validateRegisterInput(input) {
   const errors = {};
-  const name = typeof input.name === "string" ? input.name.trim() : "";
-  const email = typeof input.email === "string" ? input.email.trim().toLowerCase() : "";
-  const password = typeof input.password === "string" ? input.password : "";
+  const body = input || {};
+  const name = typeof body.name === "string" ? body.name.trim() : "";
+  const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+  const password = typeof body.password === "string" ? body.password : "";
 
   if (!name) {
     errors.name = "Name is required.";
@@ -73,14 +71,11 @@ function validateRegisterInput(input) {
   };
 }
 
-/**
- * Validates login input: email and password required (no format checks
- * beyond presence, since we don't want to leak which rule failed).
- */
 function validateLoginInput(input) {
   const errors = {};
-  const email = typeof input.email === "string" ? input.email.trim().toLowerCase() : "";
-  const password = typeof input.password === "string" ? input.password : "";
+  const body = input || {};
+  const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+  const password = typeof body.password === "string" ? body.password : "";
 
   if (!email) {
     errors.email = "Email is required.";

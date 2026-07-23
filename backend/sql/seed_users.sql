@@ -1,6 +1,5 @@
 -- Run this in the Supabase SQL editor (Project -> SQL Editor -> New query).
 
--- 1. Users table (skip if it already exists in your project).
 create table if not exists public.users (
   id bigint generated always as identity primary key,
   name text not null,
@@ -9,12 +8,19 @@ create table if not exists public.users (
   created_at timestamptz not null default now()
 );
 
--- 2. Sample/demo account.
--- Email:    demo@stockroom.dev
--- Password: Demo123!
--- The value below is the bcrypt hash of "Demo123!" (10 salt rounds) —
--- generated with bcryptjs so it verifies correctly against the API's
--- bcrypt.compare() call. Do not replace this with plain text.
+create table if not exists public.products (
+  id bigint generated always as identity primary key,
+  name text not null,
+  category text not null,
+  price numeric not null default 0 check (price >= 0),
+  quantity integer not null default 0 check (quantity >= 0),
+  image_url text,
+  created_at timestamptz not null default now()
+);
+
+alter table public.products
+  add column if not exists image_url text;
+
 insert into public.users (name, email, password)
 values (
   'Demo User',

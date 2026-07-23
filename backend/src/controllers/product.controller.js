@@ -1,6 +1,10 @@
 const productModel = require("../models/product.model");
 const { validateProductInput } = require("../utils/validators");
 
+function getUploadedImageUrl(req) {
+  return req.file ? `/uploads/${req.file.filename}` : undefined;
+}
+
 async function getProducts(req, res, next) {
   try {
     const { search, category, page, limit, sortBy, sortOrder } = req.query;
@@ -11,38 +15,69 @@ async function getProducts(req, res, next) {
   }
 }
 
-async function createProduct(req, res, next) {
+async function getProduct(req, res, next) {
   try {
-    const validation = validateProductInput(req.body);
-
-    if (!validation.isValid) {
-      return res.status(400).json({ message: "Validation failed", errors: validation.errors });
-    }
-
-    const product = await productModel.create(validation.data);
-    res.status(201).json(product);
-  } catch (error) {
-    next(error);
-  }
-}
-
-async function updateProduct(req, res, next) {
-  try {
-    const validation = validateProductInput(req.body);
-
-    if (!validation.isValid) {
-      return res.status(400).json({ message: "Validation failed", errors: validation.errors });
-    }
-
-    const product = await productModel.update(req.params.id, validation.data);
+    const product = await productModel.findById(req.params.id);
 
     if (!product) {
       return res.status(404).json({ message: "Product not found" });
     }
 
-    res.json(product);
+    return res.json(product);
   } catch (error) {
-    next(error);
+    return next(error);
+  }
+}
+
+async function createProduct(req, res, next) {
+  try {
+    const validation = validateProductInput(req.body || {});
+
+    if (!validation.isValid) {
+      return res.status(400).json({
+        message: "Validation failed",
+        errors: validation.errors
+      });
+    }
+
+    const product = await productModel.create({
+      ...validation.data,
+      image_url: getUploadedImageUrl(req) || null
+    });
+
+    return res.status(201).json(product);
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function updateProduct(req, res, next) {
+  try {
+    const validation = validateProductInput(req.body || {});
+
+    if (!validation.isValid) {
+      return res.status(400).json({
+        message: "Validation failed",
+        errors: validation.errors
+      });
+    }
+
+    const updateData = { ...validation.data };
+    const imageUrl = getUploadedImageUrl(req);
+
+    if (imageUrl) {
+      updateData.image_url = imageUrl;
+    }
+
+    const product = await productModel.update(req.params.id, updateData);
+
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    return res.json(product);
+  } catch (error) {
+    return next(error);
   }
 }
 
@@ -54,23 +89,24 @@ async function deleteProduct(req, res, next) {
       return res.status(404).json({ message: "Product not found" });
     }
 
-    res.status(204).send();
+    return res.status(204).send();
   } catch (error) {
-    next(error);
+    return next(error);
   }
 }
 
 async function getCategories(req, res, next) {
   try {
     const categories = await productModel.getCategories();
-    res.json(categories);
+    return res.json(categories);
   } catch (error) {
-    next(error);
+    return next(error);
   }
 }
 
 module.exports = {
   getProducts,
+  getProduct,
   createProduct,
   updateProduct,
   deleteProduct,

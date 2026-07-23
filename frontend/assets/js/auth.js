@@ -1,257 +1,161 @@
-const authApiBaseUrl = "/api/auth";
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-// If already logged in, skip straight to the dashboard.
-(function redirectIfAuthed() {
-  if (localStorage.getItem("authToken")) {
+function redirectIfAuthed() {
+  const token = localStorage.getItem("authToken") || sessionStorage.getItem("authToken");
+  if (token) {
     window.location.href = "index.html";
   }
-})();
-
-const toastContainer = document.getElementById("toastContainer");
-
-function showToast(message, type) {
-  const isSuccess = type === "success";
-  const toastEl = document.createElement("div");
-  toastEl.className = `toast app-toast ${isSuccess ? "success" : "danger"}`;
-  toastEl.setAttribute("role", "alert");
-  toastEl.innerHTML = `
-    <div class="toast-body d-flex align-items-center">
-      <svg class="toast-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        ${isSuccess
-          ? '<path d="M20 6 9 17l-5-5"/>'
-          : '<circle cx="12" cy="12" r="10"/><path d="M12 8v5"/><path d="M12 16h.01"/>'}
-      </svg>
-      <span class="flex-grow-1">${escapeHtml(message)}</span>
-      <button type="button" class="btn-close ms-2" data-bs-dismiss="toast" aria-label="Close"></button>
-    </div>
-  `;
-  toastContainer.appendChild(toastEl);
-  const toast = new bootstrap.Toast(toastEl, { delay: 4500 });
-  toastEl.addEventListener("hidden.bs.toast", () => toastEl.remove());
-  toast.show();
 }
 
-function escapeHtml(value) {
-  return String(value).replace(/[&<>"']/g, (character) => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    "\"": "&quot;",
-    "'": "&#039;"
-  }[character]));
+function setBusy(button, isBusy) {
+  if (!button) return;
+  button.disabled = isBusy;
+  button.classList.toggle("is-loading", isBusy);
 }
 
-function setFieldError(inputId, errorId, message) {
-  const input = document.getElementById(inputId);
-  const errorEl = document.getElementById(errorId);
-  if (input) input.classList.toggle("is-invalid", Boolean(message));
-  if (errorEl) errorEl.textContent = message || "";
+function setFieldError(field, message) {
+  const input = document.getElementById(field);
+  const error = document.getElementById(`${field}Error`);
+
+  if (input) {
+    input.classList.toggle("invalid", Boolean(message));
+  }
+  if (error) {
+    error.textContent = message || "";
+  }
 }
 
-function clearFieldErrors(pairs) {
-  pairs.forEach(([inputId, errorId]) => setFieldError(inputId, errorId, ""));
+function clearErrors(fields) {
+  fields.forEach((field) => setFieldError(field, ""));
 }
 
-function togglePasswordVisibility(buttonEl, inputEl) {
-  const isHidden = inputEl.type === "password";
-  inputEl.type = isHidden ? "text" : "password";
-  buttonEl.innerHTML = isHidden
-    ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/><path d="M3 3l18 18"/></svg>'
-    : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>';
+function togglePassword(button, input) {
+  const showing = input.type === "text";
+  input.type = showing ? "password" : "text";
+  button.textContent = showing ? "Show" : "Hide";
 }
 
-// ---------------- Register page ----------------
-function initRegisterForm() {
+function initPasswordToggles() {
+  document.querySelectorAll("[data-password-toggle]").forEach((button) => {
+    const input = document.getElementById(button.dataset.passwordToggle);
+    if (input) {
+      button.addEventListener("click", () => togglePassword(button, input));
+    }
+  });
+}
+
+function initLogin() {
+  const form = document.getElementById("loginForm");
+  if (!form) return;
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    clearErrors(["email", "password"]);
+
+    const email = document.getElementById("email").value.trim().toLowerCase();
+    const password = document.getElementById("password").value;
+    const submit = document.getElementById("loginSubmit");
+    let invalid = false;
+
+    if (!email) {
+      setFieldError("email", "Email is required.");
+      invalid = true;
+    }
+    if (!password) {
+      setFieldError("password", "Password is required.");
+      invalid = true;
+    }
+    if (invalid) return;
+
+    setBusy(submit, true);
+    try {
+      const result = await api.login({ email, password });
+      storage.setSession(result.data);
+      toast("Welcome back.", "success");
+      window.setTimeout(() => {
+        window.location.href = "index.html";
+      }, 400);
+    } catch (error) {
+      toast(error.message, "error");
+    } finally {
+      setBusy(submit, false);
+    }
+  });
+}
+
+function initRegister() {
   const form = document.getElementById("registerForm");
   if (!form) return;
 
-  const nameInput = document.getElementById("name");
-  const emailInput = document.getElementById("email");
-  const passwordInput = document.getElementById("password");
-  const confirmInput = document.getElementById("confirmPassword");
-  const submitBtn = document.getElementById("registerSubmit");
-  const toggleBtn = document.getElementById("togglePassword");
-  const strengthHint = document.getElementById("passwordHint");
+  const password = document.getElementById("password");
+  const hint = document.getElementById("passwordHint");
 
-  if (toggleBtn) {
-    toggleBtn.addEventListener("click", () => togglePasswordVisibility(toggleBtn, passwordInput));
-  }
-
-  if (passwordInput && strengthHint) {
-    passwordInput.addEventListener("input", () => {
-      const length = passwordInput.value.length;
-      if (length === 0) {
-        strengthHint.textContent = "";
-        strengthHint.classList.remove("ok");
-      } else if (length < 6) {
-        strengthHint.textContent = `${6 - length} more character${6 - length === 1 ? "" : "s"} needed`;
-        strengthHint.classList.remove("ok");
+  if (password && hint) {
+    password.addEventListener("input", () => {
+      if (!password.value) {
+        hint.textContent = "";
+      } else if (password.value.length < 6) {
+        hint.textContent = `${6 - password.value.length} more character${password.value.length === 5 ? "" : "s"} needed`;
       } else {
-        strengthHint.textContent = "Looks good";
-        strengthHint.classList.add("ok");
+        hint.textContent = "Password length is valid";
       }
     });
   }
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
-    clearFieldErrors([
-      ["name", "nameError"],
-      ["email", "emailError"],
-      ["password", "passwordError"],
-      ["confirmPassword", "confirmPasswordError"]
-    ]);
+    clearErrors(["name", "email", "password", "confirmPassword"]);
 
-    const name = nameInput.value.trim();
-    const email = emailInput.value.trim();
-    const password = passwordInput.value;
-    const confirmPassword = confirmInput.value;
-
-    let hasError = false;
+    const name = document.getElementById("name").value.trim();
+    const email = document.getElementById("email").value.trim().toLowerCase();
+    const pass = document.getElementById("password").value;
+    const confirmPassword = document.getElementById("confirmPassword").value;
+    const submit = document.getElementById("registerSubmit");
+    let invalid = false;
 
     if (!name) {
-      setFieldError("name", "nameError", "Name is required.");
-      hasError = true;
+      setFieldError("name", "Name is required.");
+      invalid = true;
     }
     if (!email) {
-      setFieldError("email", "emailError", "Email is required.");
-      hasError = true;
+      setFieldError("email", "Email is required.");
+      invalid = true;
     } else if (!EMAIL_REGEX.test(email)) {
-      setFieldError("email", "emailError", "Enter a valid email address.");
-      hasError = true;
+      setFieldError("email", "Enter a valid email address.");
+      invalid = true;
     }
-    if (!password) {
-      setFieldError("password", "passwordError", "Password is required.");
-      hasError = true;
-    } else if (password.length < 6) {
-      setFieldError("password", "passwordError", "Password must be at least 6 characters.");
-      hasError = true;
+    if (!pass || pass.length < 6) {
+      setFieldError("password", "Password must be at least 6 characters.");
+      invalid = true;
     }
-    if (confirmPassword !== password) {
-      setFieldError("confirmPassword", "confirmPasswordError", "Passwords do not match.");
-      hasError = true;
+    if (confirmPassword !== pass) {
+      setFieldError("confirmPassword", "Passwords do not match.");
+      invalid = true;
     }
+    if (invalid) return;
 
-    if (hasError) return;
-
-    submitBtn.disabled = true;
-
+    setBusy(submit, true);
     try {
-      const response = await fetch(`${authApiBaseUrl}/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password })
-      });
-
-      const result = await parseAuthResponse(response);
-      persistSession(result.data);
-      showToast("Account created. Redirecting…", "success");
+      const result = await api.register({ name, email, password: pass });
+      storage.setSession(result.data);
+      toast("Account created.", "success");
       window.setTimeout(() => {
         window.location.href = "index.html";
-      }, 700);
+      }, 400);
     } catch (error) {
-      if (error.status === 409) {
-        setFieldError("email", "emailError", "An account with this email already exists.");
-      } else if (error.fieldErrors) {
-        Object.entries(error.fieldErrors).forEach(([field, message]) => {
-          const errorId = `${field}Error`;
-          if (document.getElementById(errorId)) {
-            setFieldError(field, errorId, message);
-          }
-        });
+      if (error.fieldErrors) {
+        Object.entries(error.fieldErrors).forEach(([field, message]) => setFieldError(field, message));
       }
-      showToast(error.message, "danger");
+      toast(error.message, "error");
     } finally {
-      submitBtn.disabled = false;
+      setBusy(submit, false);
     }
   });
-}
-
-// ---------------- Login page ----------------
-function initLoginForm() {
-  const form = document.getElementById("loginForm");
-  if (!form) return;
-
-  const emailInput = document.getElementById("email");
-  const passwordInput = document.getElementById("password");
-  const submitBtn = document.getElementById("loginSubmit");
-  const toggleBtn = document.getElementById("togglePassword");
-
-  if (toggleBtn) {
-    toggleBtn.addEventListener("click", () => togglePasswordVisibility(toggleBtn, passwordInput));
-  }
-
-  form.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    clearFieldErrors([
-      ["email", "emailError"],
-      ["password", "passwordError"]
-    ]);
-
-    const email = emailInput.value.trim();
-    const password = passwordInput.value;
-
-    let hasError = false;
-    if (!email) {
-      setFieldError("email", "emailError", "Email is required.");
-      hasError = true;
-    }
-    if (!password) {
-      setFieldError("password", "passwordError", "Password is required.");
-      hasError = true;
-    }
-    if (hasError) return;
-
-    submitBtn.disabled = true;
-
-    try {
-      const response = await fetch(`${authApiBaseUrl}/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password })
-      });
-
-      const result = await parseAuthResponse(response);
-      persistSession(result.data);
-      showToast("Welcome back. Redirecting…", "success");
-      window.setTimeout(() => {
-        window.location.href = "index.html";
-      }, 600);
-    } catch (error) {
-      if (error.status === 401) {
-        showToast("Invalid email or password.", "danger");
-      } else {
-        showToast(error.message, "danger");
-      }
-    } finally {
-      submitBtn.disabled = false;
-    }
-  });
-}
-
-async function parseAuthResponse(response) {
-  const data = await response.json().catch(() => ({}));
-
-  if (!response.ok) {
-    const error = new Error(data.message || "Request failed.");
-    error.status = response.status;
-    error.fieldErrors = data.errors || null;
-    throw error;
-  }
-
-  return data;
-}
-
-function persistSession(payload) {
-  if (!payload || !payload.token) {
-    return;
-  }
-  localStorage.setItem("authToken", payload.token);
-  localStorage.setItem("authUser", JSON.stringify(payload.user || null));
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  initLoginForm();
-  initRegisterForm();
+  redirectIfAuthed();
+  initPasswordToggles();
+  initLogin();
+  initRegister();
 });

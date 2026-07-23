@@ -1,16 +1,17 @@
 const express = require("express");
 const productController = require("../controllers/product.controller");
 const authMiddleware = require("../middleware/auth.middleware");
+const upload = require("../middleware/upload.middleware");
 
 const router = express.Router();
 
-// All product routes require a valid logged-in user.
 router.use(authMiddleware);
 
 router.get("/", productController.getProducts);
 router.get("/categories", productController.getCategories);
-router.post("/", productController.createProduct);
-router.put("/:id", productController.updateProduct);
+router.get("/:id", productController.getProduct);
+router.post("/", upload.single("image"), productController.createProduct);
+router.put("/:id", upload.single("image"), productController.updateProduct);
 router.delete("/:id", productController.deleteProduct);
 
 module.exports = router;

@@ -1,180 +1,111 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Stockify - Dashboard</title>
-    <!-- Phosphor Icons -->
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dashboard · Stockroom</title>
     <link rel="stylesheet" href="assets/css/styles.css">
   </head>
   <body>
-    <div class="app-container">
-      
-      <!-- Sidebar -->
+    <div class="app-shell">
       <aside class="sidebar">
-        <div class="brand">
-          <div class="brand-icon">IN</div>
-          <div class="brand-text">
-            <h2>Stockify</h2>
-            <p>Inventory Manager</p>
-          </div>
-        </div>
+        <a class="brand" href="index.html">
+          <span class="brand-mark">SR</span>
+          <span>
+            <strong>Stockroom</strong>
+            <small>Inventory Console</small>
+          </span>
+        </a>
 
-        <div class="nav-group">
-          <div class="nav-group-title">Core</div>
-          <a href="index.html" class="nav-link active">
-            <i class="ph ph-squares-four"></i>
-            Dashboard
-          </a>
-        </div>
+        <nav class="nav-list" aria-label="Primary">
+          <a class="nav-link active" href="index.html">Dashboard</a>
+          <a class="nav-link" href="products.html">Products</a>
+        </nav>
 
-        <div class="nav-group">
-          <div class="nav-group-title">Manage</div>
-          <a href="products.html" class="nav-link">
-            <i class="ph ph-package"></i>
-            Products
-          </a>
-        </div>
-
-        <div class="sidebar-spacer"></div>
-
-        <div class="user-profile" id="user-profile-btn">
-          <img src="https://ui-avatars.com/api/?name=Abdullah+Khan&background=random" alt="User Avatar" class="user-avatar" id="user-avatar">
-          <div class="user-info">
-            <h4 id="user-name">Abdullah Khan</h4>
-            <p id="user-role">Admin</p>
-          </div>
-          <i class="ph ph-caret-down"></i>
-        </div>
+        <button class="profile-card" type="button" data-logout title="Log out">
+          <span class="avatar" data-user-initial>A</span>
+          <span>
+            <strong data-user-name>Account</strong>
+            <small data-user-email></small>
+          </span>
+        </button>
       </aside>
 
-      <!-- Main Content -->
       <main class="main-content">
-        <header class="topbar">
-          <div class="page-title">
+        <header class="page-header">
+          <div>
+            <p class="eyebrow">Live Overview</p>
             <h1>Dashboard</h1>
-            <p>Overview of your business metrics, activity, and inventory health.</p>
+            <p>Inventory value, stock pressure, and recent products from your backend.</p>
           </div>
-          <div class="topbar-actions">
-            <a href="products.html" class="btn-primary" style="text-decoration: none;">
-              <i class="ph ph-plus"></i> Manage Products
-            </a>
-          </div>
+          <a class="primary-button compact-button" href="products.html">Manage products</a>
         </header>
 
-        <!-- Stat Cards -->
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-icon purple"><i class="ph ph-package"></i></div>
-            <div class="stat-details">
-              <h3>Total Products</h3>
-              <div class="value" id="statTotalProducts">0</div>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon green"><i class="ph ph-check-circle"></i></div>
-            <div class="stat-details">
-              <h3>Units in Stock</h3>
-              <div class="value" id="statTotalStock">0</div>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon blue"><i class="ph ph-currency-dollar"></i></div>
-            <div class="stat-details">
-              <h3>Inventory Value</h3>
-              <div class="value" id="statTotalValue">$0.00</div>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon orange"><i class="ph ph-warning"></i></div>
-            <div class="stat-details">
-              <h3>Low Stock Alert</h3>
-              <div class="value" id="statLowStock">0</div>
-            </div>
-          </div>
-        </div>
+        <section class="stats-grid" aria-label="Inventory statistics">
+          <article class="stat-card">
+            <span>Total Products</span>
+            <strong id="statTotalProducts">0</strong>
+          </article>
+          <article class="stat-card">
+            <span>Units in Stock</span>
+            <strong id="statTotalStock">0</strong>
+          </article>
+          <article class="stat-card">
+            <span>Inventory Value</span>
+            <strong id="statTotalValue">$0.00</strong>
+          </article>
+          <article class="stat-card">
+            <span>Categories</span>
+            <strong id="statCategories">0</strong>
+          </article>
+          <article class="stat-card warning">
+            <span>Low Stock</span>
+            <strong id="statLowStock">0</strong>
+          </article>
+          <article class="stat-card danger">
+            <span>Out of Stock</span>
+            <strong id="statOutOfStock">0</strong>
+          </article>
+        </section>
 
-        <!-- Charts Area -->
-        <div class="charts-grid">
-          <div class="neo-card">
-            <div class="neo-card-header">
-              <h3>Inventory Performance & Flow</h3>
-              <button class="btn-text">Filter Period</button>
-            </div>
-            <div class="chart-placeholder">
-              <span>Interactive Analytics Trendline Area</span>
-            </div>
-          </div>
-
-          <div class="neo-card">
-            <div class="neo-card-header">
-              <h3>Stock Distribution</h3>
-            </div>
-            <div class="chart-placeholder">
-              <span>Category Breakdown View</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Lists Area -->
-        <div class="lists-grid">
-          <div class="neo-card">
-            <div class="neo-card-header">
-              <h3>Recent System Actions</h3>
-              <button class="btn-text">View All</button>
-            </div>
-            <div class="list-container">
-              <div class="list-item">
-                <div class="list-icon success"><i class="ph ph-plus-circle"></i></div>
-                <div class="list-details" style="flex-grow: 1;">
-                  <h4>Product Catalog Synced</h4>
-                  <p>Connected live data cleanly with Supabase database backend.</p>
-                </div>
-                <div class="list-action"><i class="ph ph-caret-right"></i></div>
-              </div>
-              <div class="list-item">
-                <div class="list-icon primary"><i class="ph ph-shield-check"></i></div>
-                <div class="list-details" style="flex-grow: 1;">
-                  <h4>Security Session Active</h4>
-                  <p>JWT authentication running securely without loops.</p>
-                </div>
-                <div class="list-action"><i class="ph ph-caret-right"></i></div>
+        <section class="dashboard-grid">
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h2>Category Breakdown</h2>
+                <p>Current units grouped by category.</p>
               </div>
             </div>
-          </div>
+            <div id="categoryBreakdown" class="bar-list"></div>
+          </article>
 
-          <div class="neo-card">
-            <div class="neo-card-header">
-              <h3>Inventory Health Status</h3>
-              <button class="btn-text">Manage</button>
-            </div>
-            <div class="list-container">
-              <div class="list-item">
-                <div class="list-icon warning"><i class="ph ph-warning-circle"></i></div>
-                <div class="list-details" style="flex-grow: 1;">
-                  <h4>Low Stock Warnings</h4>
-                  <p>Check categories falling below safety threshold counts.</p>
-                </div>
-                <div class="list-indicator"></div>
-              </div>
-              <div class="list-item">
-                <div class="list-icon success"><i class="ph ph-check"></i></div>
-                <div class="list-details" style="flex-grow: 1;">
-                  <h4>Database Integrity Verified</h4>
-                  <p>All tables and mock variables fully decoupled.</p>
-                </div>
-                <div class="list-action"><i class="ph ph-caret-right"></i></div>
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h2>Recent Products</h2>
+                <p>Latest visible catalog records.</p>
               </div>
             </div>
-          </div>
-        </div>
+            <div id="recentProducts" class="list-stack"></div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h2>Stock Alerts</h2>
+                <p>Products at or below 5 units.</p>
+              </div>
+            </div>
+            <div id="lowStockList" class="list-stack"></div>
+          </article>
+        </section>
       </main>
     </div>
 
-    <!-- Toast Container -->
-    <div class="toast-container position-fixed bottom-0 end-0 p-4" id="toastContainer"></div>
-
+    <div id="toastContainer" class="toast-container"></div>
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/common.js"></script>
     <script src="assets/js/dashboard.js"></script>
+    <script src="assets/js/utils.js"></script>
   </body>
 </html>
