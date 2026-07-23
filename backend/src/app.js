@@ -19,7 +19,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-app.use(express.static(path.join(__dirname, "../../frontend")));
+app.use(express.static(path.join(__dirname, "../../frontend-redesign")));
 
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok" });
@@ -29,7 +29,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 
 app.get("/", (req, res, next) => {
-  const indexPath = path.join(__dirname, "../../frontend/index.html");
+  const indexPath = path.join(__dirname, "../../frontend-redesign/index.html");
   res.sendFile(indexPath, (error) => {
     if (error) {
       next();
